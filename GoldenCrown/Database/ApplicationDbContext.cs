@@ -1,21 +1,21 @@
 using GoldenCrown.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace GoldenCrown.Database;
-
-public class ApplicationDbContext : DbContext
+namespace GoldenCrown.Database
 {
-    public DbSet<User> Users { get; set; }
-    public DbSet<Account> Accounts { get; set; }
-    public DbSet<Session> Sessions { get; set; }
-    public DbSet<Transaction> Transactions { get; set; }
-
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    public class ApplicationDbContext : DbContext
     {
-        
-    }
-    
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+        public DbSet<Account> Accounts { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Session> Sessions { get; set; }
+        public DbSet<Transaction> Transactions { get; set; }
+
+
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             var userEntity = modelBuilder.Entity<User>()
                 .ToTable("users");
@@ -44,11 +44,11 @@ public class ApplicationDbContext : DbContext
                 .IsRequired();
             accountEntity.Property(x => x.Balance)
                 .HasColumnName("balance")
+                .HasPrecision(18, 2)
                 .IsRequired();
             accountEntity.HasOne<User>()
                 .WithOne()
-                .HasForeignKey<Account>(x => x.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey<Account>(x => x.UserId);
 
             var sessionEntity = modelBuilder.Entity<Session>()
                 .ToTable("sessions");
@@ -64,8 +64,7 @@ public class ApplicationDbContext : DbContext
                 .IsRequired();
             sessionEntity.HasOne<User>()
                 .WithOne()
-                .HasForeignKey<Session>(x => x.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey<Session>(x => x.UserId);
 
             var transactionEntity = modelBuilder.Entity<Transaction>()
                 .ToTable("transactions");
@@ -82,13 +81,18 @@ public class ApplicationDbContext : DbContext
             transactionEntity.Property(x => x.CreatedAt)
                 .HasColumnName("created_at")
                 .IsRequired();
+            transactionEntity.Property(x => x.Amount)
+                .HasColumnName("amount")
+                .HasPrecision(18, 2)
+                .IsRequired();
             transactionEntity.HasOne<Account>()
                 .WithMany()
                 .HasForeignKey(x => x.SenderAccountId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
             transactionEntity.HasOne<Account>()
                 .WithMany()
                 .HasForeignKey(x => x.ReceiverAccountId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
         }
+    }
 }

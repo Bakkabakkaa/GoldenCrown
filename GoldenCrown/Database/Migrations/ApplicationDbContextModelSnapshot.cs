@@ -130,6 +130,22 @@ namespace GoldenCrown.Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("users", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Login = "admin",
+                            Name = "Administrator",
+                            Password = "admin"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Login = "user",
+                            Name = "Regular User",
+                            Password = "user"
+                        });
                 });
 
             modelBuilder.Entity("GoldenCrown.Models.Account", b =>

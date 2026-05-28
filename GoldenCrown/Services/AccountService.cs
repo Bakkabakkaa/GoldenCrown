@@ -28,6 +28,6 @@ public class AccountService : IAccountService
         };
 
         _context.Accounts.Add(account);
-        await _context.Accounts.AddAsync(account);
+        await _context.SaveChangesAsync();
     }
 }

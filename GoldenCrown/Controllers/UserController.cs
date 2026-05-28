@@ -32,4 +32,22 @@ public class UserController : ControllerBase
 
         return BadRequest(new { Message = "User registration failed" });
     }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        
+        var result = await _userService.Login(loginRequest.Login, loginRequest.Passwoed);
+
+        if (result)
+        {
+            return Ok(new { Token = result.Value });
+        }
+
+        return NotFound();
+    }
 }

@@ -18,6 +18,11 @@ public class UserController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        
         var result = await _userService.RegisterAsync(registerRequest.Login, registerRequest.Name, registerRequest.Password);
 
         if (result)

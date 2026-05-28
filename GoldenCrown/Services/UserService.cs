@@ -14,17 +14,12 @@ public class UserService : IUserService
         _context = context;
         _accountService = accountService;
     }
-    public async Task<bool> RegisterAsync(string login, string name, string password)
+    public async Task<Result> RegisterAsync(string login, string name, string password)
     {
         var existing = await _context.Users.FirstOrDefaultAsync(u => u.Login == login);
         if (existing != null)
         {
-            return false;
-        }
-
-        if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
-        {
-            return false;
+            return Result.Failure("User already exists");
         }
 
         var user = new User
@@ -39,6 +34,39 @@ public class UserService : IUserService
 
         await _accountService.CreateAccountAsync(login);
 
-        return true;
+        return Result.Success();
+    }
+
+    public async Task<Result<string>> Login(string login, string password)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Login == login && u.Password == password);
+
+        if (user == null)
+        {
+            return Result<string>.Failure("Invalid login or password");
+        }
+
+        var session = new Session()
+        {
+            UserId = user.Id,
+            Token = Guid.NewGuid().ToString(),
+            ExpiresAt = DateTime.UtcNow.AddHours(1)
+        };
+
+        var existingSession = await _context.Sessions.FirstOrDefaultAsync(s => s.UserId == user.Id);
+
+        if (existingSession != null)
+        {
+            existingSession.Token = session.Token;
+            existingSession.ExpiresAt = session.ExpiresAt;
+        }
+        else
+        {
+            _context.Sessions.Add(session);
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Result<string>.Success(session.Token);
     }
 }

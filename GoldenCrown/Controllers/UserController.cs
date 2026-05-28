@@ -4,8 +4,27 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GoldenCrown.Controllers;
 
-[Route("api/user")]
-public class UserController : Controller
+[Route("api/[controller]")]
+[ApiController]
+public class UserController : ControllerBase
 {
+    private readonly IUserService _userService;
+
+    public UserController(IUserService userService)
+    {
+        _userService = userService;
+    }
     
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
+    {
+        var result = await _userService.RegisterAsync(registerRequest.Login, registerRequest.Name, registerRequest.Password);
+
+        if (result)
+        {
+            return Ok();
+        }
+
+        return BadRequest(new { Message = "User registration failed" });
+    }
 }

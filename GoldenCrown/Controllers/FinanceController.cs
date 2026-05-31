@@ -30,4 +30,17 @@ public class FinanceController : ControllerBase
 
         return BadRequest(new { Message = balanceResult.ErrorMessage });
     }
+
+    [HttpPost("deposit")]
+    public async Task<IActionResult> DepositAsync([FromBody] DepositRequest depositRequest)
+    {
+        var depositResult = await _financeService.DepositAsync(depositRequest.Token, depositRequest.Amount);
+
+        if (depositResult.IsSuccess)
+        {
+            return Ok();
+        }
+
+        return BadRequest(new { Message = depositResult.ErrorMessage });
+    }
 }

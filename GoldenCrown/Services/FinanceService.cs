@@ -13,7 +13,7 @@ public class FinanceService : IFinanceService
         _context = context;
     }
     
-    public async Task<Result<decimal>> GetBalance(string token)
+    public async Task<Result<decimal>> GetBalanceAsync(string token)
     {
         var session = await _context.Sessions.FirstOrDefaultAsync(s => s.Token == token);
         
@@ -23,8 +23,8 @@ public class FinanceService : IFinanceService
         }
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == session.UserId);
-        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == user.Id);
+        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == user!.Id);
 
-        return Result<decimal>.Success(account.Balance);
+        return Result<decimal>.Success(account!.Balance);
     }
 }

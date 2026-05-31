@@ -1,4 +1,5 @@
 using GoldenCrown.Dtos;
+using GoldenCrown.Dtos.User;
 using GoldenCrown.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -41,7 +42,7 @@ public class UserController : ControllerBase
             return BadRequest(ModelState);
         }
         
-        var result = await _userService.Login(loginRequest.Login, loginRequest.Passwoed);
+        var result = await _userService.Login(loginRequest.Login, loginRequest.Password);
 
         if (result)
         {

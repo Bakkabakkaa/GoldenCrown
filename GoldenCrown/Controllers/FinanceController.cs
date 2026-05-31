@@ -43,4 +43,18 @@ public class FinanceController : ControllerBase
 
         return BadRequest(new { Message = depositResult.ErrorMessage });
     }
+
+    [HttpPost("transfer")]
+    public async Task<IActionResult> TransferAsync([FromBody] TransferRequest transferRequest)
+    {
+        var transferResult = await _financeService.TransferAsync(transferRequest.Token,
+            transferRequest.ReceiverLogin, transferRequest.Amount);
+
+        if (transferResult.IsSuccess)
+        {
+            return Ok();
+        }
+
+        return BadRequest(new { Message = transferResult.ErrorMessage });
+    }
 }

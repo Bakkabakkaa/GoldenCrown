@@ -1,5 +1,6 @@
 using GoldenCrown.Database;
 using GoldenCrown.Dtos.Finance;
+using GoldenCrown.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace GoldenCrown.Services;
@@ -44,6 +45,47 @@ public class FinanceService : IFinanceService
         
         await _context.SaveChangesAsync();
         return Result.Success();
+    }
 
+    public async Task<Result> TransferAsync(string fromToken, string toLogin, decimal amount)
+    {
+        var fromSession = await _context.Sessions.FirstOrDefaultAsync(s => s.Token == fromToken);
+
+        if (fromSession == null)
+        {
+            return Result.Failure("User not authorized");
+        }
+
+        var fromUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == fromSession.UserId);
+        var fromAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == fromUser!.Id);
+        var toUser = await _context.Users.FirstOrDefaultAsync(u => u.Login == toLogin);
+
+        if (toUser == null)
+        {
+            return Result.Failure("Recipient not found");
+        }
+
+        var toAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == toUser.Id);
+
+        if (fromAccount!.Balance < amount)
+        {
+            return Result.Failure("Insufficient funds");
+        }
+
+        fromAccount.Balance -= amount;
+        toAccount.Balance += amount;
+
+        var transaction = new Transaction()
+        {
+            ReceiverAccountId = toAccount.Id,
+            SenderAccountId = fromAccount.Id,
+            Amount = amount,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Transactions.Add(transaction);
+
+        await _context.SaveChangesAsync();
+        return Result.Success();
     }
 }

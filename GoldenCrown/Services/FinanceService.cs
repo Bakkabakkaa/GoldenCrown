@@ -27,4 +27,23 @@ public class FinanceService : IFinanceService
 
         return Result<decimal>.Success(account!.Balance);
     }
+
+    public async Task<Result> DepositAsync(string token, decimal amount)
+    {
+        var session = await _context.Sessions.FirstOrDefaultAsync(s => s.Token == token);
+
+        if (session == null)
+        {
+            return Result.Failure("User not authorized");
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == session.UserId);
+        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == user!.Id);
+
+        account!.Balance += amount;
+        
+        await _context.SaveChangesAsync();
+        return Result.Success();
+
+    }
 }

@@ -21,6 +21,11 @@ public class Result<T> : Result
             ErrorMessage = errorMessage
         };
     }
+
+    public static implicit operator Result<T>(T value)
+    {
+        return Success(value);
+    }
 }
 
 public class Result
@@ -48,5 +53,10 @@ public class Result
     public static implicit operator bool(Result result)
     {
         return result.IsSuccess;
+    }
+
+    public static implicit operator Result(string errorMessage)
+    {
+        return Failure(errorMessage);
     }
 }

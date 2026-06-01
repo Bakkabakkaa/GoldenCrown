@@ -88,4 +88,80 @@ public class FinanceService : IFinanceService
         await _context.SaveChangesAsync();
         return Result.Success();
     }
+
+    public async Task<Result<List<TransactionHistoryResponse>>> GetTransactionHistoryAsync(string token,
+        DateTime? dateFrom, DateTime? dateTo, int skip, int take)
+    {
+        if (dateFrom != null && dateTo != null && dateFrom > dateTo)
+        {
+            return Result<List<TransactionHistoryResponse>>.Failure("Invalid date range");
+        }
+
+        var session = await _context.Sessions.FirstOrDefaultAsync(s => s.Token == token);
+        
+        if (session == null)
+        {
+            return Result<List<TransactionHistoryResponse>>.Failure("The user is not authorized");
+        }
+
+        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == session.UserId);
+
+        var transactions = _context.Transactions.Where(x => x.SenderAccountId == account!.Id ||
+                                                            x.ReceiverAccountId == account.Id);
+
+        if (dateFrom != null)
+        {
+            transactions = transactions.Where(x => x.CreatedAt >= dateFrom.Value);
+        }
+
+        if (dateTo != null)
+        {
+            transactions = transactions.Where(x => x.CreatedAt <= dateTo.Value);
+        }
+
+        transactions = transactions.Skip(skip).Take(take);
+
+        var dbTransactions = await transactions.ToListAsync();
+
+        var result = new List<TransactionHistoryResponse>();
+        var allSenders = transactions.Select(x => x.SenderAccountId);
+        var allReceivers = transactions.Select(x => x.ReceiverAccountId);
+        var allAccounts = allSenders.ToHashSet();
+
+        foreach (var receiver in allReceivers)
+        {
+            allAccounts.Add(receiver);
+        }
+
+        var names = await _context.Accounts.Where(x => allAccounts.Contains(x.Id))
+            .Join(_context.Users,
+                acc => acc.UserId,
+                u => u.Id,
+                (acc, u) => new
+                {
+                    Name = u.Name,
+                    AccId = acc.Id,
+                }).ToDictionaryAsync(x => x.AccId);
+
+        foreach (var transaction in transactions)
+        {
+            var senderName = names[transaction.SenderAccountId].Name;
+            var receiverName = names[transaction.ReceiverAccountId].Name;
+            
+            result.Add(new TransactionHistoryResponse()
+            {
+                SenderName = senderName,
+                ReceiverName = receiverName,
+                Amount = transaction.Amount,
+                Date = transaction.CreatedAt
+            });
+        }
+
+        return result;
+    }
 }
+
+
+
+
+

@@ -59,7 +59,7 @@ public class FinanceController : ControllerBase
     }
 
     [HttpGet("history")]
-    public async Task<IActionResult> GetTransactionHistoryAsync([FromBody] TransactionHistoryRequest request)
+    public async Task<IActionResult> GetTransactionHistoryAsync(TransactionHistoryRequest request)
     {
         var historyResult = await _financeService.GetTransactionHistoryAsync(request.Token,
             request.From, request.To,

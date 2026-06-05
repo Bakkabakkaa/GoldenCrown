@@ -54,3 +54,6 @@ CodeCoverage/
 # NUnit
 *.VisualState.xml
 TestResult.xml
+
+*.DotSettings.user
+.idea/

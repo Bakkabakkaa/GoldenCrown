@@ -1,75 +1,81 @@
+using GoldenCrown.Attributes;
 using GoldenCrown.Dtos.Finance;
 using GoldenCrown.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GoldenCrown.Controllers;
-
-[Route("api/[controller]")]
-[ApiController]
-public class FinanceController : ControllerBase
+namespace GoldenCrown.Controllers
 {
-    private readonly IFinanceService _financeService;
-
-    public FinanceController(IFinanceService financeService)
+    [Route("api/[controller]")]
+    [ApiController]
+    [MyAuthorize]
+    public class FinanceController : Controller
     {
-        _financeService = financeService;
-    }
+        private readonly IFinanceService _financeService;
 
-    [HttpGet("balance")]
-    public async Task<IActionResult> GetBalanceAsync([FromHeader]string token)
-    {
-        var balanceResult = await _financeService.GetBalanceAsync(token);
-
-        if (balanceResult.IsSuccess)
+        public FinanceController(IFinanceService financeService)
         {
-            return Ok(new BalanceResponse()
+            _financeService = financeService;
+        }
+
+        [HttpGet("balance")]
+        public async Task<IActionResult> GetBalanceAsync()
+        {
+            var balanceResult = await _financeService.GetBalanceAsync(GetUserid());
+
+            if (balanceResult.IsSuccess)
             {
-                Balance = balanceResult.Value
-            });
+                return Ok(new BalanceResponse
+                {
+                    Balance = balanceResult.Value
+                });
+            }
+
+            return BadRequest(new { Message = balanceResult.ErrorMessage });
         }
 
-        return BadRequest(new { Message = balanceResult.ErrorMessage });
-    }
-
-    [HttpPost("deposit")]
-    public async Task<IActionResult> DepositAsync([FromBody] DepositRequest depositRequest)
-    {
-        var depositResult = await _financeService.DepositAsync(depositRequest.Token, depositRequest.Amount);
-
-        if (depositResult.IsSuccess)
+        [HttpPost("deposit")]
+        public async Task<IActionResult> DepositAsync([FromBody] DepositRequest request)
         {
-            return Ok();
+            var depositResult = await _financeService.DepositAsync(GetUserid(), request.Amount);
+            if (depositResult.IsSuccess)
+            {
+                return Ok();
+            }
+            return BadRequest(new { Message = depositResult.ErrorMessage });
         }
 
-        return BadRequest(new { Message = depositResult.ErrorMessage });
-    }
-
-    [HttpPost("transfer")]
-    public async Task<IActionResult> TransferAsync([FromBody] TransferRequest transferRequest)
-    {
-        var transferResult = await _financeService.TransferAsync(transferRequest.Token,
-            transferRequest.ReceiverLogin, transferRequest.Amount);
-
-        if (transferResult.IsSuccess)
+        [HttpPost("transfer")]
+        public async Task<IActionResult> TransferAsync([FromBody] TransferRequest request)
         {
-            return Ok();
+            var transferResult = await _financeService.TransferAsync(GetUserid(), request.ReceiverLogin, request.Amount);
+            if (transferResult.IsSuccess)
+            {
+                return Ok();
+            }
+            return BadRequest(new { Message = transferResult.ErrorMessage });
         }
 
-        return BadRequest(new { Message = transferResult.ErrorMessage });
-    }
-
-    [HttpGet("history")]
-    public async Task<IActionResult> GetTransactionHistoryAsync(TransactionHistoryRequest request)
-    {
-        var historyResult = await _financeService.GetTransactionHistoryAsync(request.Token,
-            request.From, request.To,
-            request.Offset, request.Limit);
-
-        if (historyResult.IsSuccess)
+        [HttpGet("history")]
+        public async Task<IActionResult> GetTransactionHistoryAsync([FromQuery]TransactionHistoryRequest request)
         {
-            return Ok(historyResult.Value);
+
+            var historyResult = await _financeService.GetTransactionHistoryAsync(
+    GetUserid(),
+                request.From,
+                request.To,
+                request.Offset,
+                request.Limit);
+            if (historyResult.IsSuccess)
+            {
+                return Ok(historyResult.Value);
+            }
+            return BadRequest(new { Message = historyResult.ErrorMessage });
         }
 
-        return BadRequest(new { Message = historyResult.ErrorMessage });
+        internal int GetUserid()
+        {
+            var userId = HttpContext.Items[Constants.UserIdContextParameter] as int?;
+            return userId!.Value;
+        }
     }
 }

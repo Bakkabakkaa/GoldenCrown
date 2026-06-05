@@ -14,31 +14,17 @@ public class FinanceService : IFinanceService
         _context = context;
     }
     
-    public async Task<Result<decimal>> GetBalanceAsync(string token)
+    public async Task<Result<decimal>> GetBalanceAsync(int userId)
     {
-        var session = await _context.Sessions.FirstOrDefaultAsync(s => s.Token == token);
-        
-        if (session == null)
-        {
-            return Result<decimal>.Failure("User not authorized");
-        }
-
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == session.UserId);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == user!.Id);
 
         return Result<decimal>.Success(account!.Balance);
     }
 
-    public async Task<Result> DepositAsync(string token, decimal amount)
+    public async Task<Result> DepositAsync(int userId, decimal amount)
     {
-        var session = await _context.Sessions.FirstOrDefaultAsync(s => s.Token == token);
-
-        if (session == null)
-        {
-            return Result.Failure("User not authorized");
-        }
-
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == session.UserId);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == user!.Id);
 
         account!.Balance += amount;
@@ -47,16 +33,10 @@ public class FinanceService : IFinanceService
         return Result.Success();
     }
 
-    public async Task<Result> TransferAsync(string fromToken, string toLogin, decimal amount)
+    public async Task<Result> TransferAsync(int fromUserId, string toLogin, decimal amount)
     {
-        var fromSession = await _context.Sessions.FirstOrDefaultAsync(s => s.Token == fromToken);
-
-        if (fromSession == null)
-        {
-            return Result.Failure("User not authorized");
-        }
-
-        var fromUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == fromSession.UserId);
+        
+        var fromUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == fromUserId);
         var fromAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == fromUser!.Id);
         var toUser = await _context.Users.FirstOrDefaultAsync(u => u.Login == toLogin);
 
@@ -89,7 +69,7 @@ public class FinanceService : IFinanceService
         return Result.Success();
     }
 
-    public async Task<Result<List<TransactionHistoryResponse>>> GetTransactionHistoryAsync(string token,
+    public async Task<Result<List<TransactionHistoryResponse>>> GetTransactionHistoryAsync(int userId,
         DateTime? dateFrom, DateTime? dateTo, int skip, int take)
     {
         if (dateFrom != null && dateTo != null && dateFrom > dateTo)
@@ -97,14 +77,7 @@ public class FinanceService : IFinanceService
             return Result<List<TransactionHistoryResponse>>.Failure("Invalid date range");
         }
 
-        var session = await _context.Sessions.FirstOrDefaultAsync(s => s.Token == token);
-        
-        if (session == null)
-        {
-            return Result<List<TransactionHistoryResponse>>.Failure("The user is not authorized");
-        }
-
-        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == session.UserId);
+        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == userId);
 
         var transactions = _context.Transactions.Where(x => x.SenderAccountId == account!.Id ||
                                                             x.ReceiverAccountId == account.Id);

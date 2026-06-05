@@ -5,10 +5,6 @@ namespace GoldenCrown.Dtos.Finance;
 
 public class TransactionHistoryRequest
 {
-    [FromQuery]
-    [Required(ErrorMessage = "The 'token' field is required")]
-    public string Token { get; set; }
-    
     public DateTime? From { get; set; }
     
     public DateTime? To { get; set; }

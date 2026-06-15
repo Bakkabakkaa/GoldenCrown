@@ -45,7 +45,10 @@ namespace GoldenCrown
                     [new OpenApiSecuritySchemeReference("Bearer", document)] = []
                 });
             });
+            
             var app = builder.Build();
+            
+            MigrateDatabase(app);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -59,8 +62,15 @@ namespace GoldenCrown
             app.UseMiddleware<AuthorizationMiddleware>();
 
             app.MapControllers();
-
+            
             app.Run();
+        }
+
+        private static void MigrateDatabase(WebApplication app)
+        {
+            using var scope = app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Database.Migrate();
         }
     }
 }

@@ -1,6 +1,8 @@
 
+using FluentValidation;
 using GoldenCrown.BackGroundServices;
 using GoldenCrown.Database;
+using GoldenCrown.Dtos.User;
 using GoldenCrown.Middlewares;
 using GoldenCrown.Services;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +25,7 @@ namespace GoldenCrown
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddScoped<IFinanceService, FinanceService>();
+            builder.Services.AddValidatorsFromAssemblyContaining<LoginRequest>();
             builder.Services.AddHostedService<SessionCleanupService>();
 
             builder.Services.AddControllers();

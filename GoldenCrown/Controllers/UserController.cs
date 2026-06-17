@@ -1,3 +1,4 @@
+using FluentValidation;
 using GoldenCrown.Dtos;
 using GoldenCrown.Dtos.User;
 using GoldenCrown.Services;
@@ -17,11 +18,12 @@ public class UserController : ControllerBase
     }
     
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
+    public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest, [FromServices] IValidator<RegisterRequest> validator)
     {
-        if (!ModelState.IsValid)
+        var validationResult = validator.Validate(registerRequest);
+        if (!validationResult.IsValid)
         {
-            return BadRequest(ModelState);
+            return BadRequest(validationResult.ToDictionary());
         }
         
         var result = await _userService.RegisterAsync(registerRequest.Login, registerRequest.Name, registerRequest.Password);
@@ -35,11 +37,12 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
+    public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest, [FromServices] IValidator<LoginRequest> validator)
     {
-        if (!ModelState.IsValid)
+        var validationResult = validator.Validate(loginRequest);
+        if (!validationResult.IsValid)
         {
-            return BadRequest(ModelState);
+            return BadRequest(validationResult.ToDictionary());
         }
         
         var result = await _userService.Login(loginRequest.Login, loginRequest.Password);

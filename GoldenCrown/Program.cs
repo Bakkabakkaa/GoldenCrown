@@ -1,10 +1,8 @@
-
 using FluentValidation;
 using GoldenCrown.BackGroundServices;
 using GoldenCrown.Database;
 using GoldenCrown.Dtos.User;
 using GoldenCrown.Middlewares;
-using GoldenCrown.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
@@ -22,9 +20,6 @@ namespace GoldenCrown
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
-            builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IAccountService, AccountService>();
-            builder.Services.AddScoped<IFinanceService, FinanceService>();
             builder.Services.AddMediatR(cfg =>
             {
                 cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);

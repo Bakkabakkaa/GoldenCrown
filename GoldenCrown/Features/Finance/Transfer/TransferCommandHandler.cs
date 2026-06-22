@@ -16,7 +16,13 @@ public class TransferCommandHandler : IRequestHandler<TransferCommand, Result>
     
     public async Task<Result> Handle(TransferCommand request, CancellationToken cancellationToken)
     {
-        var fromAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == request.FromUserId, cancellationToken);
+        var fromAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == request.FromUserId && a.Currency == request.Currency, cancellationToken);
+
+        if (fromAccount == null)
+        {
+            return Result.Failure("Account not found");
+        }
+        
         var toUser = await _context.Users.FirstOrDefaultAsync(u => u.Login == request.ToLogin, cancellationToken);
 
         if (toUser == null)
@@ -24,9 +30,14 @@ public class TransferCommandHandler : IRequestHandler<TransferCommand, Result>
             return Result.Failure("Recipient not found");
         }
 
-        var toAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == toUser.Id, cancellationToken);
+        var toAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == toUser.Id && a.Currency == request.Currency, cancellationToken);
 
-        if (fromAccount!.Balance < request.Amount)
+        if (toAccount == null)
+        {
+            return Result.Failure("Account not found");
+        }
+        
+        if (fromAccount.Balance < request.Amount)
         {
             return Result.Failure("Insufficient funds");
         }
@@ -39,7 +50,8 @@ public class TransferCommandHandler : IRequestHandler<TransferCommand, Result>
             ReceiverAccountId = toAccount.Id,
             SenderAccountId = fromAccount.Id,
             Amount = request.Amount,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Currency = request.Currency
         };
 
         _context.Transactions.Add(transaction);

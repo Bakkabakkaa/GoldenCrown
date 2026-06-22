@@ -6,10 +6,12 @@ public class DepositCommand : IRequest<Result>
 {
     public int UserId { get; set; }
     public decimal Amount { get; set; }
+    public string Currency { get; set; }
 
-    public DepositCommand(int userId, decimal amount)
+    public DepositCommand(int userId, decimal amount, string currency)
     {
         UserId = userId;
         Amount = amount;
+        Currency = currency;
     }
 }

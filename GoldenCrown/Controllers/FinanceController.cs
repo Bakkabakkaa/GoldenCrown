@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using FluentValidation;
 using GoldenCrown.Attributes;
 using GoldenCrown.Dtos.Finance;
@@ -23,9 +24,15 @@ namespace GoldenCrown.Controllers
         }
 
         [HttpGet("balance")]
-        public async Task<IActionResult> GetBalanceAsync()
+        public async Task<IActionResult> GetBalanceAsync(BalanceRequest request, [FromServices] IValidator<BalanceRequest> validator)
         {
-            var query = new GetBalanceQuery(GetUserid());
+            var validationResult = await validator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.ToDictionary());
+            }
+            
+            var query = new GetBalanceQuery(GetUserid(), request.Currency);
             var balanceResult = await _mediator.Send(query);
 
             if (balanceResult.IsSuccess)
@@ -48,7 +55,7 @@ namespace GoldenCrown.Controllers
                 return BadRequest(validationResult.ToDictionary());
             }
 
-            var command = new DepositCommand(GetUserid(), request.Amount);
+            var command = new DepositCommand(GetUserid(), request.Amount, request.Currency);
             var result = await _mediator.Send(command);
             if (result)
             {
@@ -67,7 +74,7 @@ namespace GoldenCrown.Controllers
                 return BadRequest(validationResult.ToDictionary());
             }
 
-            var command = new TransferCommand(GetUserid(), request.ReceiverLogin, request.Amount);
+            var command = new TransferCommand(GetUserid(), request.ReceiverLogin, request.Amount, request.Currency);
             var transferResult = await _mediator.Send(command);
             
             if (transferResult.IsSuccess)

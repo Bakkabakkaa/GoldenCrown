@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Mvc;
+
 namespace GoldenCrown.Dtos.Finance;
 
-public class DepositRequest
+public class BalanceRequest
 {
-    public decimal Amount { get; set; }
+    [FromQuery]
     public string Currency { get; set; }
 }

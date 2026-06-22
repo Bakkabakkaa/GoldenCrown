@@ -51,9 +51,13 @@ namespace GoldenCrown.Database
                 .HasColumnName("balance")
                 .HasPrecision(18, 2)
                 .IsRequired();
+            accountEntity.Property(x => x.Currency)
+                .HasColumnName("currency")
+                .IsRequired()
+                .HasDefaultValue(Currency.USD);
             accountEntity.HasOne<User>()
-                .WithOne()
-                .HasForeignKey<Account>(x => x.UserId);
+                .WithMany()
+                .HasForeignKey(x => x.UserId);
 
             var sessionEntity = modelBuilder.Entity<Session>()
                 .ToTable("sessions");
@@ -90,6 +94,10 @@ namespace GoldenCrown.Database
                 .HasColumnName("amount")
                 .HasPrecision(18, 2)
                 .IsRequired();
+            transactionEntity.Property(x => x.Currency)
+                .HasColumnName("currency")
+                .IsRequired()
+                .HasDefaultValue(Currency.USD);
             transactionEntity.HasOne<Account>()
                 .WithMany()
                 .HasForeignKey(x => x.SenderAccountId)

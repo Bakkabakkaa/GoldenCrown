@@ -32,13 +32,25 @@ public class UserRegisterCommandHandler : IRequestHandler<UserRegisterCommand, R
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        var account = new Account()
+        var currencies = new List<string>
         {
-            UserId = user.Id,
-            Balance = 0
+            Currency.GBP,
+            Currency.USD,
+            Currency.EUR
         };
-
-        _context.Accounts.Add(account);
+            
+        foreach (var currency in currencies)
+        {
+            var account = new Account()
+            {
+                UserId = user.Id,
+                Balance = 0,
+                Currency = currency
+            };
+            
+            _context.Accounts.Add(account);
+        }
+        
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

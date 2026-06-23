@@ -1,0 +1,19 @@
+using FluentValidation;
+using GoldenCrown.Api.Dtos.Finance;
+using GoldenCrown.Domain.Models;
+
+namespace GoldenCrown.Api.Validators;
+
+public class DepositRequestValidator : AbstractValidator<DepositRequest>
+{
+    public DepositRequestValidator()
+    {
+        RuleFor(x => x.Amount)
+            .GreaterThan(0).WithMessage("The amount must be greater than 0");
+
+        RuleFor(x => x.Currency)
+            .NotEmpty()
+            .Must(currency => (new List<string>(){Currency.USD, Currency.EUR, Currency.GBP}).Contains(currency))
+            .WithMessage("Specify the currency");
+    }
+}

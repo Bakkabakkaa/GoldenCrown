@@ -9,6 +9,7 @@
 
 .vs/
 .idea/
+.DS_Store
 
 # Build results
 [Dd]ebug/
@@ -54,6 +55,5 @@ CodeCoverage/
 # NUnit
 *.VisualState.xml
 TestResult.xml
-
-*.DotSettings.user
-.idea/
+nunit-*.xml
+/GoldenCrown.sln.DotSettings.user

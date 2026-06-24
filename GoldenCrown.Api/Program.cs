@@ -3,6 +3,7 @@ using GoldenCrown.Api.BackGroundServices;
 using GoldenCrown.Api.Middlewares;
 using GoldenCrown.Application.Dtos.User;
 using GoldenCrown.Infrastructure.Database;
+using GoldenCrown.Infrastructure.RabbitMQ;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
@@ -20,10 +21,15 @@ namespace GoldenCrown
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
+            
             builder.Services.AddMediatR(cfg =>
             {
                 cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
             });
+
+            builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMQ"));
+            builder.Services.AddSingleton<IMessageProducer, RabbitMqMessageProducer>();
+            
             builder.Services.AddValidatorsFromAssemblyContaining<LoginRequest>();
             builder.Services.AddHostedService<SessionCleanupService>();
 

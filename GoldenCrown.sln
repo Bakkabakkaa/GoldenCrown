@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldenCrown.Domain", "Golde
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldenCrown.Infrastructure", "GoldenCrown.Infrastructure\GoldenCrown.Infrastructure.csproj", "{E37A2AA0-C41C-41FD-B487-7901B895EA0A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoldenCrown.TaxInspectionConsole", "GoldenCrown.TaxInspectionConsole\GoldenCrown.TaxInspectionConsole.csproj", "{EAF6E412-3107-4E9A-92C8-DAAAA633EC0C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{E37A2AA0-C41C-41FD-B487-7901B895EA0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E37A2AA0-C41C-41FD-B487-7901B895EA0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E37A2AA0-C41C-41FD-B487-7901B895EA0A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAF6E412-3107-4E9A-92C8-DAAAA633EC0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAF6E412-3107-4E9A-92C8-DAAAA633EC0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAF6E412-3107-4E9A-92C8-DAAAA633EC0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAF6E412-3107-4E9A-92C8-DAAAA633EC0C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -2,6 +2,7 @@ using FluentValidation;
 using GoldenCrown.Api.BackGroundServices;
 using GoldenCrown.Api.Middlewares;
 using GoldenCrown.Application.Dtos.User;
+using GoldenCrown.Application.Features.User.UserLogin;
 using GoldenCrown.Infrastructure.Database;
 using GoldenCrown.Infrastructure.RabbitMQ;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +25,7 @@ namespace GoldenCrown
             
             builder.Services.AddMediatR(cfg =>
             {
-                cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(UserLoginCommandHandler).Assembly);
             });
 
             builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMQ"));

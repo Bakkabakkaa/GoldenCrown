@@ -1,4 +1,5 @@
 using GoldenCrown.Application.Events;
+using GoldenCrown.Application.Services.Currency;
 using GoldenCrown.Domain.Models;
 using GoldenCrown.Infrastructure.Database;
 using GoldenCrown.Infrastructure.RabbitMQ;
@@ -11,11 +12,13 @@ public class TransferCommandHandler : IRequestHandler<TransferCommand, Result>
 {
     private readonly ApplicationDbContext _context;
     private readonly IMessageProducer _messageProducer;
+    private readonly ICurrencyService _currencyService;
 
-    public TransferCommandHandler(ApplicationDbContext context, IMessageProducer messageProducer)
+    public TransferCommandHandler(ApplicationDbContext context, IMessageProducer messageProducer, ICurrencyService currencyService)
     {
         _context = context;
         _messageProducer = messageProducer;
+        _currencyService = currencyService;
     }
     
     public async Task<Result> Handle(TransferCommand request, CancellationToken cancellationToken)
@@ -27,6 +30,11 @@ public class TransferCommandHandler : IRequestHandler<TransferCommand, Result>
             return Result.Failure("Account not found");
         }
         
+        if (fromAccount.Balance < request.Amount)
+        {
+            return Result.Failure("Insufficient funds");
+        }
+        
         var toUser = await _context.Users.FirstOrDefaultAsync(u => u.Login == request.ToLogin, cancellationToken);
 
         if (toUser == null)
@@ -34,20 +42,17 @@ public class TransferCommandHandler : IRequestHandler<TransferCommand, Result>
             return Result.Failure("Recipient not found");
         }
 
-        var toAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == toUser.Id && a.Currency == request.Currency, cancellationToken);
+        var toAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.UserId == toUser.Id && a.Currency == request.ReceiverCurrency, cancellationToken);
 
         if (toAccount == null)
         {
             return Result.Failure("Account not found");
         }
         
-        if (fromAccount.Balance < request.Amount)
-        {
-            return Result.Failure("Insufficient funds");
-        }
-
         fromAccount.Balance -= request.Amount;
-        toAccount.Balance += request.Amount;
+        var targetAmount = await _currencyService.Convert(request.Amount, fromAccount.Currency, toAccount.Currency,
+            cancellationToken);
+        toAccount.Balance += targetAmount;
 
         var transaction = new Transaction()
         {

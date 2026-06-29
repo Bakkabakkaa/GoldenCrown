@@ -3,12 +3,15 @@ using GoldenCrown.Api.BackGroundServices;
 using GoldenCrown.Api.Middlewares;
 using GoldenCrown.Application.Dtos.User;
 using GoldenCrown.Application.Features.User.UserLogin;
+using GoldenCrown.Application.Services.Currency;
+using GoldenCrown.Infrastructure.Clients.ExchangeClient;
+using GoldenCrown.Infrastructure.Clients.ExchangeClient.Models;
 using GoldenCrown.Infrastructure.Database;
 using GoldenCrown.Infrastructure.RabbitMQ;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
-namespace GoldenCrown
+namespace GoldenCrown.Api
 {
     public class Program
     {
@@ -29,13 +32,17 @@ namespace GoldenCrown
             });
 
             builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMQ"));
+            builder.Services.Configure<ExchangeClientSettings>(builder.Configuration.GetSection("ExchangeClient"));
+            
+            builder.Services.AddHttpClient<IExchangeClient, ExchangeClient>();
+            builder.Services.AddScoped<ICurrencyService, CurrencyService>();
+            
             builder.Services.AddSingleton<IMessageProducer, RabbitMqMessageProducer>();
             
             builder.Services.AddValidatorsFromAssemblyContaining<LoginRequest>();
             builder.Services.AddHostedService<SessionCleanupService>();
 
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {

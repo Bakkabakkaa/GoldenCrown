@@ -16,7 +16,12 @@ public class TransferRequestValidator : AbstractValidator<TransferRequest>
         
         RuleFor(x => x.Currency)
             .NotEmpty()
-            .Must(currency => (new List<string>(){Currency.USD, Currency.EUR, Currency.GBP}).Contains(currency))
+            .Must(currency => Currency.AllCurrencies.Contains(currency))
             .WithMessage("Specify the currency");
+
+        RuleFor(x => x.ReceiverCurrency)
+            .NotEmpty()
+            .Must(currency => Currency.AllCurrencies.Contains(currency))
+            .WithMessage("Specify the recipient's currency");
     }
 }

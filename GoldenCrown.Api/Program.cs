@@ -9,6 +9,7 @@ using GoldenCrown.Infrastructure.Clients.ExchangeClient.Models;
 using GoldenCrown.Infrastructure.Database;
 using GoldenCrown.Infrastructure.RabbitMQ;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.OpenApi;
 
 namespace GoldenCrown.Api
@@ -21,7 +22,8 @@ namespace GoldenCrown.Api
 
             // Add services to the container.
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+                                   ?? throw new InvalidOperationException(
+                                       "Connection string 'DefaultConnection' not found.");
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
@@ -33,13 +35,25 @@ namespace GoldenCrown.Api
 
             builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMQ"));
             builder.Services.Configure<ExchangeClientSettings>(builder.Configuration.GetSection("ExchangeClient"));
-            
-            builder.Services.AddHttpClient<IExchangeClient, ExchangeClient>();
+
             builder.Services.AddScoped<ICurrencyService, CurrencyService>();
             
+            builder.Services.AddHttpClient();
+            builder.Services.AddScoped<ExchangeClient>();
+            builder.Services.AddScoped<IExchangeClient, CachedExchangeClient>(sp =>
+                new CachedExchangeClient(
+                    sp.GetRequiredService<ExchangeClient>(),
+                    sp.GetRequiredService<IMemoryCache>(),
+                    sp.GetRequiredService<ILogger<CachedExchangeClient>>()
+                    ));
+
             builder.Services.AddSingleton<IMessageProducer, RabbitMqMessageProducer>();
             
             builder.Services.AddValidatorsFromAssemblyContaining<LoginRequest>();
+            builder.Services.AddAutoMapper(_ => { }, typeof(Program).Assembly);
+
+            builder.Services.AddMemoryCache();
+            
             builder.Services.AddHostedService<SessionCleanupService>();
 
             builder.Services.AddControllers();
@@ -53,7 +67,7 @@ namespace GoldenCrown.Api
                     Type = SecuritySchemeType.Http,
                     Scheme = "Bearer",
                     BearerFormat = "JWT",
-                    Description = "Введите токен: Bearer your-token"
+                    Description = "Please enter into field your api token"
                 });
 
                 options.AddSecurityRequirement(document => new OpenApiSecurityRequirement

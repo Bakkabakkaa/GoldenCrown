@@ -17,12 +17,17 @@ public class ExchangeClient : IExchangeClient
 
     public async Task<decimal> GetExchangeRate(string baseCurrencyCode, string targetCurrencyCode, CancellationToken ct)
     {
+        return (await GetExchangeRates(baseCurrencyCode, ct)).First(x => x.Quote == targetCurrencyCode).Rate;
+    }
+
+    public async Task<ExchangeRateResponse[]> GetExchangeRates(string baseCurrencyCode, CancellationToken ct)
+    {
         var url = string.Format(_settings.Url, baseCurrencyCode.ToLower());
         var result = await _httpClient.GetAsync(url, ct);
         result.EnsureSuccessStatusCode();
         
         var rates = await result.Content.ReadFromJsonAsync<ExchangeRateResponse[]>(ct);
 
-        return rates!.First(x => x.Quote == targetCurrencyCode).Rate;
+        return rates!;
     }
 }

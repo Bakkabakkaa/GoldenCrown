@@ -1,19 +1,24 @@
+using System.Text.Json;
 using GoldenCrown.Infrastructure.Clients.ExchangeClient.Models;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
 namespace GoldenCrown.Infrastructure.Clients.ExchangeClient;
 
-public class CachedExchangeClient : IExchangeClient
+public class DistributedCachedExchangeClient : IExchangeClient
 {
-    private static readonly TimeSpan Ttl = TimeSpan.FromHours(1);
-    
-    private readonly ExchangeClient _client;
-    private readonly IMemoryCache _cache;
-    private readonly ILogger<CachedExchangeClient> _logger;
-    private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+    private static readonly DistributedCacheEntryOptions _options = new()
+    {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+    };
 
-    public CachedExchangeClient(ExchangeClient client, IMemoryCache cache, ILogger<CachedExchangeClient> logger)
+    
+    private readonly IExchangeClient _client;
+    private readonly IDistributedCache _cache;
+    private readonly ILogger<DistributedCachedExchangeClient> _logger;
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
+
+    public DistributedCachedExchangeClient(IExchangeClient client, IDistributedCache cache, ILogger<DistributedCachedExchangeClient> logger)
     {
         _client = client;
         _cache = cache;
@@ -29,28 +34,30 @@ public class CachedExchangeClient : IExchangeClient
     public async Task<ExchangeRateResponse[]> GetExchangeRates(string baseCurrencyCode, CancellationToken ct)
     {
         string key = $"currency:{baseCurrencyCode.ToUpper()}";
-
-        if (_cache.TryGetValue<ExchangeRateResponse[]>(key, out var cached))
+        var cached = await _cache.GetStringAsync(key, ct);
+        if (cached != null)
         {
             _logger.LogInformation($"Currency cache hit for {baseCurrencyCode}");
-            return cached;
+            return JsonSerializer.Deserialize<ExchangeRateResponse[]>(cached)!;
         }
         
         _logger.LogInformation($"Currency cache miss for {baseCurrencyCode}");
 
         ExchangeRateResponse[] rates;
         await _semaphore.WaitAsync(ct);
+        
         try
         {
-            if (_cache.TryGetValue(key, out cached))
+            cached = await _cache.GetStringAsync(key, ct);
+            if (cached != null)
             {
                 _logger.LogInformation($"Currency cache hit after semaphore for {baseCurrencyCode}");
-                return cached;
+                return JsonSerializer.Deserialize<ExchangeRateResponse[]>(cached)!;
             }
 
             _logger.LogInformation($"Currency http request for {baseCurrencyCode}");
             rates = await _client.GetExchangeRates(baseCurrencyCode, ct);
-            _cache.Set(key, rates, Ttl);
+            await _cache.SetStringAsync(key, JsonSerializer.Serialize(rates), _options, ct);
         }
         finally
         {
@@ -60,17 +67,3 @@ public class CachedExchangeClient : IExchangeClient
         return rates;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

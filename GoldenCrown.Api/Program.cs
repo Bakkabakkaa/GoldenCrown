@@ -9,7 +9,7 @@ using GoldenCrown.Infrastructure.Clients.ExchangeClient.Models;
 using GoldenCrown.Infrastructure.Database;
 using GoldenCrown.Infrastructure.RabbitMQ;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.OpenApi;
 
 namespace GoldenCrown.Api
@@ -40,19 +40,23 @@ namespace GoldenCrown.Api
             
             builder.Services.AddHttpClient();
             builder.Services.AddScoped<ExchangeClient>();
-            builder.Services.AddScoped<IExchangeClient, CachedExchangeClient>(sp =>
-                new CachedExchangeClient(
+            builder.Services.AddScoped<IExchangeClient, DistributedCachedExchangeClient>(sp =>
+                new DistributedCachedExchangeClient(
                     sp.GetRequiredService<ExchangeClient>(),
-                    sp.GetRequiredService<IMemoryCache>(),
-                    sp.GetRequiredService<ILogger<CachedExchangeClient>>()
-                    ));
+                    sp.GetRequiredService<IDistributedCache>(),
+                    sp.GetRequiredService<ILogger<DistributedCachedExchangeClient>>()
+                ));
 
             builder.Services.AddSingleton<IMessageProducer, RabbitMqMessageProducer>();
             
             builder.Services.AddValidatorsFromAssemblyContaining<LoginRequest>();
             builder.Services.AddAutoMapper(_ => { }, typeof(Program).Assembly);
 
-            builder.Services.AddMemoryCache();
+            builder.Services.AddStackExchangeRedisCache(o =>
+            {
+                o.Configuration = builder.Configuration["Redis:Configuration"];
+                o.InstanceName = builder.Configuration["Redis:InstanceName"];
+            });
             
             builder.Services.AddHostedService<SessionCleanupService>();
 
